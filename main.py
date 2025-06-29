@@ -4,25 +4,46 @@ import struct
 import tkinter as tk
 from dotenv import load_dotenv
 import os
+import speech_recognition as sr
+import threading
 
+recognizer = sr.Recognizer()
 load_dotenv()
-
 API_KEY = os.getenv("API_KEY")
 
-def gui():
-    # Create the main window
-    root = tk.Tk()
-    root.title("Hello World App")
+# GUI global reference
+label = None
 
-    # Create a label with the text "Hello, World!"
-    label = tk.Label(root, text="Hello, World!", font=("Arial", 20))
+def recognize_speech():
+    global label
+    with sr.Microphone() as source:
+        label.configure(text="Listening...")
+        recognizer.adjust_for_ambient_noise(source)
+        audio = recognizer.listen(source)
+
+    try:
+        text = recognizer.recognize_google(audio)
+        label.configure(text="You said: " + text)
+    except sr.UnknownValueError:
+        label.configure(text="Could not understand audio")
+    except sr.RequestError as e:
+        label.configure(text="Could not request results: " + str(e))
+
+def gui():
+    global label
+    root = tk.Tk()
+    root.title("Lap Assist")
+
+    label = tk.Label(root, text="", font=("Arial", 20))
     label.pack(padx=20, pady=20)
 
-    # Start the Tkinter event loop
+    # Start speech recognition in a new thread
+    threading.Thread(target=recognize_speech, daemon=True).start()
+
     root.mainloop()
 
 # Initialize Porcupine
-porcupine = pvporcupine.create(API_KEY,keywords=["jarvis"])  # other options: "alexa", "hey google", "picovoice", etc.
+porcupine = pvporcupine.create(access_key=API_KEY, keywords=["jarvis"])
 
 # Set up microphone
 pa = pyaudio.PyAudio()
@@ -44,7 +65,7 @@ try:
         keyword_index = porcupine.process(pcm)
         if keyword_index >= 0:
             print("Hotword 'Jarvis' detected!")
-            gui()
+            gui()  # Open GUI when hotword detected
 except KeyboardInterrupt:
     print("Stopped by user")
 finally:
@@ -52,5 +73,3 @@ finally:
     stream.close()
     pa.terminate()
     porcupine.delete()
-
-
