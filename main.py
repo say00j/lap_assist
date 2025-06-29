@@ -7,6 +7,10 @@ import os
 import speech_recognition as sr
 import threading
 import queue
+import webbrowser
+from playsound import playsound
+
+
 
 # Load environment
 load_dotenv()
@@ -39,6 +43,7 @@ def process_events():
         while True:
             event = event_queue.get_nowait()
             if event == "jarvis":
+                playsound('notif_sound.mp3')  # or 'beep.wav'
                 text_box.insert(tk.END, "Hotword 'Jarvis' detected!\n")
                 threading.Thread(target=recognize_speech, daemon=True).start()
     except queue.Empty:
@@ -62,6 +67,9 @@ def recognize_speech():
         text_box.insert(tk.END, f"\nYou said: {text}\n")
         if "exit" in text.lower():
             root.quit()
+        elif "youtube" in text.lower():
+            query = "python tutorial"
+            webbrowser.open(f"https://www.youtube.com/results?search_query={query}")
     except sr.UnknownValueError:
         text_box.insert(tk.END, "\nCould not understand audio\n")
     except sr.RequestError as e:
