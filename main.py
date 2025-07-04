@@ -8,13 +8,16 @@ import speech_recognition as sr
 import threading
 import queue
 import webbrowser
-from playsound import playsound
+import pygame
 
 
 
 # Load environment
 load_dotenv()
 API_KEY = os.getenv("API_KEY")
+pygame.init()
+pygame.mixer.init()
+pygame.mixer.music.load("notif_sound.wav")
 
 recognizer = sr.Recognizer()
 event_queue = queue.Queue()
@@ -43,9 +46,11 @@ def process_events():
         while True:
             event = event_queue.get_nowait()
             if event == "jarvis":
-                playsound('notif_sound.mp3')  # or 'beep.wav'
-                text_box.insert(tk.END, "Hotword 'Jarvis' detected!\n")
-                threading.Thread(target=recognize_speech, daemon=True).start()
+                try:
+                    pygame.mixer.music.play()
+                finally:
+                    text_box.insert(tk.END, "Hotword 'Jarvis' detected!\n")
+                    threading.Thread(target=recognize_speech, daemon=True).start()
     except queue.Empty:
         pass
     root.after(100, process_events)
@@ -57,7 +62,7 @@ def recognize_speech():
         text_box.insert(tk.END, "Listening...\n")
         recognizer.adjust_for_ambient_noise(source)
         try:
-            audio = recognizer.listen(source, timeout=5)
+            audio = recognizer.listen(source)
         except sr.WaitTimeoutError:
             text_box.insert(tk.END, "No speech detected.\n")
             return
@@ -65,11 +70,14 @@ def recognize_speech():
     try:
         text = recognizer.recognize_google(audio)
         text_box.insert(tk.END, f"\nYou said: {text}\n")
+
         if "exit" in text.lower():
             root.quit()
-        elif "youtube" in text.lower():
-            query = "python tutorial"
+        elif "open youtube" in text.lower():
+            query = text.lower()[text.lower().find("youtube") + len("youtube") + 1:]
+            print("query=" + query)
             webbrowser.open(f"https://www.youtube.com/results?search_query={query}")
+
     except sr.UnknownValueError:
         text_box.insert(tk.END, "\nCould not understand audio\n")
     except sr.RequestError as e:
