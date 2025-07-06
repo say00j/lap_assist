@@ -16,10 +16,10 @@ import pyttsx3
 engine = pyttsx3.init()
 
 def speak(text):
-    engine.setProperty('rate', 160)
+    engine.setProperty('rate', 200)
     engine.setProperty('volume', 1.0)
     voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[0].id)  # Change index for different voice
+    engine.setProperty('voice', voices[1].id)  # Change index for different voice
     engine.say(text)
     engine.runAndWait()
 
@@ -106,6 +106,7 @@ def recognize_speech():
                                        1.if prompt is something like 'iron man wor' fix and return 'iron man working' no need to explain just return the prompt,
                                        2.if prompt is starting with question words, return the answer in plain text,
                                        3.Dont cut down the prompt
+                                       4.dont bold the text using **
                                        """)
         text_box.insert(tk.END, f"\nYou said: {text}\n")
         text_box.insert(tk.END, f"\njarvis: {gemini_tuned_text}\n")
